@@ -286,4 +286,52 @@ Section ex_1_8.
    end.
 End ex_1_8.
 
+Section ex_1_9.
+  Definition fin(n: nat) : Type.
+  induction n.
+  exact Empty.
+  Print Empty.
+  exact (option IHn).
+  Defined.
+  Definition fmax: forall n, fin (S n).
+  induction n.
+  simpl.
+  exact None.
+  simpl.
+  exact (Some IHn).
+  Defined.
+End ex_1_9.
+
+Section ex_1_10.
+  Fixpoint ack(n m:nat):nat :=
+    rec_N (nat->nat) S (fun _ q m' => rec_N nat (1%nat) (fun _ => q) (S m')) n m.
+  Goal forall n, ack 0 n = S n.
+  simpl.
+  auto.
+  Qed.
+  Goal forall n, ack (S n) 0 = ack n 1.
+  induction n.
+  simpl.
+  auto.
+  auto.
+  Qed.
+End ex_1_10.
+
+Section ex_1_11.
+  Goal forall P:Type, ~~~P -> ~P.
+  intros P H H1.
+  apply H.
+  intro H2.
+  exact (H2 H1).
+  Qed.
+End ex_1_11.
+
+Section ex_1_14.
+  Goal forall (A:Type) (x:A)(p: x=x), p = 1.
+  intros A x p.
+  Admitted.
+End ex_1_14.
+
+
+
 
