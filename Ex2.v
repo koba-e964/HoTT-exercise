@@ -3,10 +3,11 @@ Require Import HoTT.
 Definition myinv : forall (A:Type) (x y:A) (p:x=y), y=x.
 intros A x y p.
 induction p.
-exact 1.
+exact idpath.
 Defined.
 
 Section ex_2_1.
+  Context `{Funext}.
   Definition comp_stmt:=
     forall (A:Type) (x y z:A), x=y -> y=z -> x=z.
   Definition comp_pr1: comp_stmt. (* induction on p *)
@@ -23,10 +24,10 @@ Section ex_2_1.
     intros A x y z p q.
     induction p.
     induction q.
-    exact 1.
+    exact idpath.
   Defined.
   Definition comp_pr12: comp_pr1 = comp_pr2.
-    compute.
+    unfold comp_pr1, comp_pr2.
     apply path_forall; intro A.
     apply path_forall; intro x.
     apply path_forall; intro y.
@@ -38,7 +39,7 @@ Section ex_2_1.
     reflexivity.
   Defined.
   Definition comp_pr23: comp_pr2 = comp_pr3.
-    compute.
+    unfold comp_pr2, comp_pr3.
     apply path_forall; intro A.
     apply path_forall; intro x.
     apply path_forall; intro y.
@@ -50,7 +51,7 @@ Section ex_2_1.
     reflexivity.
   Defined.
   Definition comp_pr13: comp_pr1 = comp_pr3.
-    compute.
+    unfold comp_pr3, comp_pr1.
     apply path_forall; intro A.
     apply path_forall; intro x.
     apply path_forall; intro y.
@@ -64,9 +65,10 @@ Section ex_2_1.
 End ex_2_1.
 
 Section ex_2_2.
+  Context `{Funext}.
   Goal (comp_pr12 @ comp_pr23) = comp_pr13.
-  compute.
-  Admitted.
+    unfold comp_pr12, comp_pr13, comp_pr23.
+    Admitted.
 End ex_2_2.
 Section ex_2_5.
   Definition map236: forall (A B:Type)(x y:A) (p:x=y)(f:A->B),
@@ -77,31 +79,18 @@ Section ex_2_5.
   Definition map237 (A B:Type)(x y:A) (p:x=y)(f:A->B)
     (tp : transport (const B) p (f x) = f y) : f x = f y :=
       (transport_const p (f x))^ @ tp.
-  Lemma ididq:(forall A (x y:A) (q:x=y), paths (concat idpath (concat idpath q)) q).
+  Lemma ididq:(forall A (x y:A) (q:x=y), paths (idpath @ q) q).
     induction q.
     auto.
   Defined.
   Lemma isequiv_map236: forall A B x y p f, IsEquiv (map236 A B x y p f).
     intros A B x y p f.
-    refine ({| equiv_inv:=_;eisretr:=_; eissect:=_; eisadj:=_ |}).
-    apply map237.
-    unfold Sect.
-    intro eq.
-    unfold map236, map237.
-    induction p.
-    simpl.
-    apply ididq.
-    unfold Sect.
-    intro eq.
-    induction p.
-    apply ididq.
-    simpl.
-    induction p.
-    intro.
-    compute.
-    induction x0.
-    exact 1.
-  Defined.
+Print IsEquiv.
+  Check eisretr.
+    refine ({| equiv_inv:=map237 A B x y p f;eisretr:=_; eissect:=_; eisadj:=_ |}).
+
+    intro x0.
+  Admitted.
 End ex_2_5.
 
 Section ex_2_6.
@@ -111,17 +100,6 @@ Section ex_2_6.
   unfold Sect.
   induction x0.
   induction p.
-  auto.
-  unfold Sect;
-  induction x0;
-  induction p;
-  auto.
-  induction x0.
-  induction p.
-  unfold paths_rect.
-  auto.
-  Defined.
+  simpl.
+  Admitted.
 End ex_2_6.
-
-
-
