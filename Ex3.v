@@ -33,10 +33,10 @@ Section ex_3_1.
 End ex_3_1.
 
 Section ex_3_2.
-  Goal forall A B, isSet A -> isSet B -> isSet (A + B).
+  Goal forall A B, IsHSet A -> IsHSet B -> IsHSet (A + B).
   Proof.
-    intros A B H H0 x y p q.
-    induction p.
-    destruct x.
-  Admitted.
+    intros A B H H0 .
+    apply hset_sum.
+  Defined.
 End ex_3_2.
+
