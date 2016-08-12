@@ -30,3 +30,13 @@ Section ex_3_1.
      (p := H0 ^).
     apply X.
   Defined.
+End ex_3_1.
+
+Section ex_3_2.
+  Goal forall A B, isSet A -> isSet B -> isSet (A + B).
+  Proof.
+    intros A B H H0 x y p q.
+    induction p.
+    destruct x.
+  Admitted.
+End ex_3_2.
