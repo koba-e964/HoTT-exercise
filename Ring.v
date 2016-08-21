@@ -115,16 +115,43 @@ apply (isring_mul_unit_l _ _ _ _ isring).
 intros r s m; symmetry; apply (isring_mul_assoc _ _ _ _ isring).
 Defined.
 
+Proposition ismodule_act_zero {R one sub mul} {isring: isRing R one sub mul}
+  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
+  : forall r, mact r mzero = mzero.
+destruct ismod_m as [[H H0 H1 H2] H3 _ _ _].
+intro r.
+assert (mact r (msub mzero mzero) = mzero).
+rewrite H3.
+apply H.
+rewrite (H mzero) in X.
+auto.
+Defined.
+
 Record isHom {R one sub mul} {isring: isRing R one sub mul}
   {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
   {N nzero nsub nact} {ismod_n: isModule (ring := isring) N nzero nsub nact}
   (f: M -> N) := 
   BuildIsHom
   {
-    ishom_zero: f mzero = nzero;
     ishom_sub: forall x y, f (msub x y) = nsub (f x) (f y);
     ishom_act: forall r x, f (mact r x) = nact r (f x)
   }.
+
+Proposition isHom_zero {R one sub mul} {isring: isRing R one sub mul}
+  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
+  {N nzero nsub nact} {ismod_n: isModule (ring := isring) N nzero nsub nact}
+  : forall f: M -> N, isHom (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n) f -> f mzero = nzero.
+intros f H.
+destruct H.
+assert (f (msub mzero mzero) = nzero).
+rewrite ishom_sub0.
+destruct ismod_n as [[H H0 H1 _] _ _ _ _].
+apply H.
+destruct ismod_m as [[H _ _ _] _ _ _ _].
+rewrite H in X.
+auto.
+Defined.
+
 
 Definition isHom_idmap {R one sub mul} {isring: isRing R one sub mul}
  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
@@ -144,14 +171,63 @@ destruct ismod_n as [is_abelian _ _ _ _].
 destruct is_abelian.
 symmetry; auto.
 intros r _.
-destruct ismod_n as [[H H0 H1 H2] H3 _ _ _].
-assert (nzero = nact r (nsub nzero nzero)).
-rewrite H3.
-symmetry; apply H.
-rewrite (H nzero) in X.
+symmetry; apply (ismodule_act_zero (ismod_m := ismod_n)).
+Defined.
+
+Section kernel_def.
+Variables (R: Type)
+  (one: R)
+  (sub: R -> R -> R)
+  (mul: R -> R -> R)
+  (isring: isRing R one sub mul).
+Variables (M: Type)
+  (mzero: M)
+  (msub: M -> M -> M)
+  (mact: R -> M -> M)
+  (ismod_m: isModule (ring := isring) M mzero msub mact).
+Variables (N: Type)
+  (nzero: N)
+  (nsub: N -> N -> N)
+  (nact: R -> N -> N)
+  (ismod_n: isModule (ring := isring) N nzero nsub nact).
+Variables (f: M -> N)
+  (isHom_f: isHom f (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n)).
+Definition kernel
+  := {x: M | f x = nzero }.
+
+
+Definition kernel_zero: kernel.
+exists mzero.
+apply (isHom_zero (ismod_m := ismod_m) (ismod_n := ismod_n)).
+auto.
+Defined.
+Print kernel_zero.
+Definition kernel_sub: kernel -> kernel -> kernel.
+intros x y.
+destruct x as [x H], y as [y H0].
+exists (msub x y).
+destruct isHom_f.
+rewrite ishom_sub0.
+rewrite H, H0.
+destruct ismod_n as [[]];
 auto.
 Defined.
 
+Definition kernel_act: R -> kernel -> kernel.
+intros r x.
+destruct x as [x H].
+exists (mact r x).
+destruct isHom_f.
+rewrite ishom_act0.
+rewrite H.
+apply (ismodule_act_zero (ismod_m := ismod_n)).
+Defined.
+
+Definition isModule_kernel:
+  isModule (ring := isring) kernel kernel_zero kernel_sub kernel_act.
+Admitted.
+
+End kernel_def.
 
 
 
