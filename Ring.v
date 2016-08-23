@@ -229,5 +229,124 @@ Admitted.
 
 End kernel_def.
 
+Section im_def.
+Variables (R: Type)
+  (one: R)
+  (sub: R -> R -> R)
+  (mul: R -> R -> R)
+  (isring: isRing R one sub mul).
+Variables (M: Type)
+  (mzero: M)
+  (msub: M -> M -> M)
+  (mact: R -> M -> M)
+  (ismod_m: isModule (ring := isring) M mzero msub mact).
+Variables (N: Type)
+  (nzero: N)
+  (nsub: N -> N -> N)
+  (nact: R -> N -> N)
+  (ismod_n: isModule (ring := isring) N nzero nsub nact).
+Variables (f: M -> N)
+  (isHom_f: isHom f (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n)).
+Context `{funext:Funext}.
+(* It might be better to use "merely",
+   but "Trunc (-1)" is easier to deal with... *)
+  Definition image := {x: N | Trunc (-1) (hfiber f x)}. 
+  Definition image_zero: image.
+    exists nzero.
+    apply tr.
+    exists mzero.
+    apply (isHom_zero (ismod_m := ismod_m) (ismod_n := ismod_n)); auto.
+  Defined.
+  Definition image_sub: image -> image -> image.
+  intros x y.
+  destruct x as [x H], y as [y H0].
+  exists (nsub x y).
+  refine (Trunc_rec _ H).
+  refine (Trunc_rec _ H0).
+  intros m n.
+  destruct m as [m H1], n as [n H2].
+  apply tr.
+  exists (msub n m).
+  rewrite <- H1.
+  rewrite <- H2.
+  apply (ishom_sub (ismod_n := ismod_n) (ismod_m := ismod_m)).
+  auto.
+  Defined.
+  Definition image_act: R -> image -> image.
+    intros r x.
+    destruct x as [x H].
+    exists (nact r x).
+    refine (Trunc_rec _ H).
+    intro H0.
+    destruct H0 as [m H0].
+    apply tr.
+    exists (mact r m).
+    rewrite <- H0.
+    apply (ishom_act _ isHom_f (ismod_m := ismod_m) (ismod_n := ismod_n)).
+  Defined.
 
+  (* Turn an equality (X) in N to an equality in image (:= {x: N | exists y, f y = x}). *)
+  Ltac eq_in_image X := apply path_sigma' with (p := X); apply path_ishprop.
+  Definition isModule_image:
+  isModule (ring := isring) image image_zero image_sub image_act.
+    case ismod_n; intros
+      ismodule_abelian0
+      ismodule_distr_l0
+      ismodule_distr_r0
+      ismodule_act_one0
+      ismodule_act_assoc0.
+    destruct ismodule_abelian0 as [isabelian_sub_xx0 isabelian_sub_r0 isabelian_130 isabelian_cancel0].
+    split.
+    split.
+
+    intro x.
+    destruct x as [x H].
+    assert (nsub x x = nzero).
+    auto.
+    eq_in_image X.
+
+    intro x.
+    destruct x as [x H].
+    assert (nsub x nzero = x).
+    auto.
+    eq_in_image X.
+
+    intros x y z.
+    destruct x as [x H0], y as [y H1], z as [z H2].
+    assert (nsub x (nsub y z) = nsub z (nsub y x)).
+    auto.
+    eq_in_image X.
+
+    intros x y z.
+    destruct x as [x H0], y as [y H1], z as [z H2].
+    assert (nsub (nsub x z) (nsub y z) = nsub x y).
+    auto.
+    eq_in_image X.
+
+    intros r m n.
+    destruct m as [m H0], n as [n H1].
+    assert (nact r (nsub m n) = nsub (nact r m) (nact r n)).
+    auto.
+    eq_in_image X.
+
+    intros r s m.
+    destruct m as [m H0].
+    assert (nact (sub r s) m = nsub (nact r m) (nact s m)).
+    auto.
+    eq_in_image X.
+
+    intro m.
+    destruct m as [m H0].
+    assert (nact one m = m).
+    auto.
+    eq_in_image X.
+
+    intros r s m.
+    destruct m as [m H0].
+    assert (nact r (nact s m) = nact (mul r s) m).
+    auto.
+    eq_in_image X.
+  Defined.
+
+End im_def.
 
