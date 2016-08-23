@@ -350,3 +350,63 @@ Context `{funext:Funext}.
 
 End im_def.
 
+Section subquo.
+  Variables (R: Type)
+    (one: R)
+    (sub: R -> R -> R)
+    (mul: R -> R -> R)
+    (isring: isRing R one sub mul).
+  Variables (M: Type)
+    (mzero: M)
+    (msub: M -> M -> M)
+    (mact: R -> M -> M)
+    (ismod_m: isModule (ring := isring) M mzero msub mact).
+  Variable (P: M -> hProp)
+    (p_mzero: P mzero)
+    (p_msub: forall m n, P m -> P n -> P (msub m n))
+    (p_mact: forall r m, P m -> P (mact r m)).
+  Definition submodule := {x: M | P x}.
+  Definition submodule_zero: submodule := (mzero; p_mzero).
+  Definition submodule_sub: submodule -> submodule -> submodule.
+  intros [m H] [n H0].
+  exists (msub m n).
+  auto.
+  Defined.
+  Definition submodule_act: R -> submodule -> submodule.
+  intros r [m H].
+  exists (mact r m).
+  auto.
+  Defined.
+  Definition isModule_submodule: isModule (ring := isring) submodule submodule_zero submodule_sub submodule_act.
+  Admitted.
+  Hypothesis (ishset_m: IsHSet M).
+  Definition quotient_module :=
+    (quotient (A := M) (fun x y => P (msub x y))).
+  Definition quotient_module_zero: quotient_module := class_of _ mzero.
+  Context `{univalence_tag: Univalence}.
+  Definition quotient_module_sub: quotient_module -> quotient_module -> quotient_module.
+  refine (quotient_rec2 (fun x y => P (msub x y)) _ (dclass := fun a1 a2 => class_of _ (msub a1 a2))).
+  intro x.
+  destruct ismod_m as [[H _ _ _] _ _ _ _].
+  rewrite H.
+  auto.
+  intros x x' H y y' H0.
+  apply related_classes_eq.
+  assert (msub (msub x y) (msub x' y') = msub (msub x x') (msub y y')) as X.
+  admit.
+  rewrite X.
+  apply p_msub; auto.
+  Admitted.
+  Definition quotient_module_act (r: R): quotient_module -> quotient_module.
+  refine (quotient_rec (fun x y => P (msub x y)) (fun a => class_of _ (mact r a)) _).
+  intros x y H.
+  apply related_classes_eq.
+  destruct ismod_m as [_ H0 _ _ _].
+  rewrite <- H0.
+  auto.
+  Defined.  
+  Definition isModule_quotient: isModule (ring := isring)
+    quotient_module quotient_module_zero quotient_module_sub quotient_module_act.
+  Admitted.
+End subquo.
+
