@@ -1,6 +1,6 @@
 Require Import HoTT.
 
-Record isAbelianGroup(M: Type)
+Class isAbelianGroup(M: Type)
  (e: M) (d: M -> M -> M) :=
   BuildIsAbelianGroup
   {
@@ -66,7 +66,7 @@ Section s1_properties.
   Defined.
 End s1_properties.
 
-Record isRing (R: Type) (one: R) (sub: R -> R -> R)
+Class isRing (R: Type) (one: R) (sub: R -> R -> R)
   (mul: R -> R -> R) :=
   BuildIsRing
   {
@@ -92,7 +92,7 @@ intros x y z; case x, y, z; auto.
 intro x; case x; auto.
 Defined.
 
-Record isModule {R one sub mul} {ring: isRing R one sub mul}
+Class isModule {R one sub mul} {ring: isRing R one sub mul}
   (M: Type) (mzero: M) (msub: M -> M -> M) (act: R -> M -> M) :=
   BuildIsModule
   {
@@ -103,20 +103,20 @@ Record isModule {R one sub mul} {ring: isRing R one sub mul}
     ismodule_act_assoc: forall r s m, act r (act s m) = act (mul r s) m
   }.
 
-Proposition self_module {R one sub mul} {isring: isRing R one sub mul}
+Instance self_module {R one sub mul} `{isring: isRing R one sub mul}
   : isModule R (ring := isring)
     (sub one one) sub mul.
 split.
-split; apply (isring_isabelian _ _ _ _ isring).
+split; apply isring_isabelian.
 
-apply (isring_distr_l _ _ _ _ isring).
-apply (isring_distr_r _ _ _ _ isring).
-apply (isring_mul_unit_l _ _ _ _ isring).
-intros r s m; symmetry; apply (isring_mul_assoc _ _ _ _ isring).
+apply isring_distr_l.
+apply isring_distr_r.
+apply isring_mul_unit_l.
+intros r s m; symmetry; apply isring_mul_assoc.
 Defined.
 
-Proposition ismodule_act_zero {R one sub mul} {isring: isRing R one sub mul}
-  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
+Proposition ismodule_act_zero {R one sub mul} `{isring: isRing R one sub mul}
+  {M mzero msub mact} `{ismod_m: isModule (R := R) (one := one) (sub := sub) (mul := mul) M mzero msub mact}
   : forall r, mact r mzero = mzero.
 destruct ismod_m as [[H H0 H1 H2] H3 _ _ _].
 intro r.
@@ -127,9 +127,9 @@ rewrite (H mzero) in X.
 auto.
 Defined.
 
-Record isHom {R one sub mul} {isring: isRing R one sub mul}
-  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
-  {N nzero nsub nact} {ismod_n: isModule (ring := isring) N nzero nsub nact}
+Class isHom {R one sub mul} `{isring: isRing R one sub mul}
+  {M mzero msub mact} `{ismod_m: isModule (R := R) (one := one) (sub := sub) (mul := mul) M mzero msub mact}
+  {N nzero nsub nact} `{ismod_n: isModule (R := R) (one := one) (sub := sub) (mul := mul) N nzero nsub nact}
   (f: M -> N) := 
   BuildIsHom
   {
@@ -140,7 +140,7 @@ Record isHom {R one sub mul} {isring: isRing R one sub mul}
 Proposition isHom_zero {R one sub mul} {isring: isRing R one sub mul}
   {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
   {N nzero nsub nact} {ismod_n: isModule (ring := isring) N nzero nsub nact}
-  : forall f: M -> N, isHom (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n) f -> f mzero = nzero.
+  : forall f: M -> N, isHom f -> f mzero = nzero.
 intros f H.
 destruct H.
 assert (f (msub mzero mzero) = nzero).
@@ -154,24 +154,22 @@ Defined.
 
 
 Definition isHom_idmap {R one sub mul} {isring: isRing R one sub mul}
- {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
-  :isHom (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_m)
-    (idmap: M -> M).
+ {M mzero msub mact} {ismod_m: isModule M mzero msub mact}
+  :isHom (idmap: M -> M).
 split; auto.
 Defined.
 
 Definition isHom_zeromap {R one sub mul} {isring: isRing R one sub mul}
-  {M mzero msub mact} {ismod_m: isModule (ring := isring) M mzero msub mact}
-  {N nzero nsub nact} {ismod_n: isModule (ring := isring) N nzero nsub nact}
-  :isHom (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n)
-    (fun _ => nzero).
+  {M mzero msub mact} {ismod_m: isModule M mzero msub mact}
+  {N nzero nsub nact} {ismod_n: isModule N nzero nsub nact}
+  :isHom (fun _ => nzero).
 split; auto.
 intros _ _.
 destruct ismod_n as [is_abelian _ _ _ _].
 destruct is_abelian.
 symmetry; auto.
 intros r _.
-symmetry; apply (ismodule_act_zero (ismod_m := ismod_n)).
+symmetry; apply ismodule_act_zero.
 Defined.
 
 Section kernel_def.
@@ -191,14 +189,14 @@ Variables (N: Type)
   (nact: R -> N -> N)
   (ismod_n: isModule (ring := isring) N nzero nsub nact).
 Variables (f: M -> N)
-  (isHom_f: isHom f (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n)).
+  (isHom_f: isHom f).
 Definition kernel
   := {x: M | f x = nzero }.
 
 
 Definition kernel_zero: kernel.
 exists mzero.
-apply (isHom_zero (ismod_m := ismod_m) (ismod_n := ismod_n)).
+apply isHom_zero.
 auto.
 Defined.
 Print kernel_zero.
@@ -220,11 +218,11 @@ exists (mact r x).
 destruct isHom_f.
 rewrite ishom_act0.
 rewrite H.
-apply (ismodule_act_zero (ismod_m := ismod_n)).
+apply ismodule_act_zero.
 Defined.
 
 Definition isModule_kernel:
-  isModule (ring := isring) kernel kernel_zero kernel_sub kernel_act.
+  isModule kernel kernel_zero kernel_sub kernel_act.
 Admitted.
 
 End kernel_def.
@@ -239,14 +237,14 @@ Variables (M: Type)
   (mzero: M)
   (msub: M -> M -> M)
   (mact: R -> M -> M)
-  (ismod_m: isModule (ring := isring) M mzero msub mact).
+  (ismod_m: isModule M mzero msub mact).
 Variables (N: Type)
   (nzero: N)
   (nsub: N -> N -> N)
   (nact: R -> N -> N)
-  (ismod_n: isModule (ring := isring) N nzero nsub nact).
+  (ismod_n: isModule N nzero nsub nact).
 Variables (f: M -> N)
-  (isHom_f: isHom f (isring := isring) (ismod_m := ismod_m) (ismod_n := ismod_n)).
+  (isHom_f: isHom f).
 Context `{funext:Funext}.
 (* It might be better to use "merely",
    but "Trunc (-1)" is easier to deal with... *)
@@ -255,7 +253,7 @@ Context `{funext:Funext}.
     exists nzero.
     apply tr.
     exists mzero.
-    apply (isHom_zero (ismod_m := ismod_m) (ismod_n := ismod_n)); auto.
+    apply isHom_zero; auto.
   Defined.
   Definition image_sub: image -> image -> image.
   intros x y.
@@ -269,8 +267,7 @@ Context `{funext:Funext}.
   exists (msub n m).
   rewrite <- H1.
   rewrite <- H2.
-  apply (ishom_sub (ismod_n := ismod_n) (ismod_m := ismod_m)).
-  auto.
+  apply ishom_sub.
   Defined.
   Definition image_act: R -> image -> image.
     intros r x.
@@ -282,13 +279,13 @@ Context `{funext:Funext}.
     apply tr.
     exists (mact r m).
     rewrite <- H0.
-    apply (ishom_act _ isHom_f (ismod_m := ismod_m) (ismod_n := ismod_n)).
+    apply ishom_act.
   Defined.
 
   (* Turn an equality (X) in N to an equality in image (:= {x: N | exists y, f y = x}). *)
   Ltac eq_in_image X := apply path_sigma' with (p := X); apply path_ishprop.
   Definition isModule_image:
-  isModule (ring := isring) image image_zero image_sub image_act.
+  isModule image image_zero image_sub image_act.
     case ismod_n; intros
       ismodule_abelian0
       ismodule_distr_l0
@@ -354,13 +351,13 @@ Section subquo.
   Variables (R: Type)
     (one: R)
     (sub: R -> R -> R)
-    (mul: R -> R -> R)
-    (isring: isRing R one sub mul).
+    (mul: R -> R -> R).
+  Context `{isring: isRing R one sub mul}.
   Variables (M: Type)
     (mzero: M)
     (msub: M -> M -> M)
-    (mact: R -> M -> M)
-    (ismod_m: isModule (ring := isring) M mzero msub mact).
+    (mact: R -> M -> M).
+  Context `{ismod_m: isModule (R := R) (one := one) (sub := sub) (mul := mul) M mzero msub mact}.
   Variable (P: M -> hProp)
     (p_mzero: P mzero)
     (p_msub: forall m n, P m -> P n -> P (msub m n))
@@ -377,7 +374,7 @@ Section subquo.
   exists (mact r m).
   auto.
   Defined.
-  Definition isModule_submodule: isModule (ring := isring) submodule submodule_zero submodule_sub submodule_act.
+  Instance isModule_submodule: isModule submodule submodule_zero submodule_sub submodule_act.
   Admitted.
   Hypothesis (ishset_m: IsHSet M).
   Definition quotient_module :=
@@ -404,8 +401,8 @@ Section subquo.
   destruct ismod_m as [_ H0 _ _ _].
   rewrite <- H0.
   auto.
-  Defined.  
-  Definition isModule_quotient: isModule (ring := isring)
+  Defined.
+  Instance isModule_quotient: isModule (ring := isring)
     quotient_module quotient_module_zero quotient_module_sub quotient_module_act.
   Admitted.
 End subquo.
