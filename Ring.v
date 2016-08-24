@@ -407,3 +407,25 @@ Section subquo.
   Admitted.
 End subquo.
 
+(* canonical inclusion *)
+Definition canonical_inclusion {R one sub mul} `{isring: isRing R one sub mul} {M mzero msub mact}
+  `{ismod_m: isModule (R := R) (one := one) (sub := sub) (mul := mul) M mzero msub mact}
+    (P: M -> hProp)
+    `{p_mzero: P mzero}
+    `{p_msub: forall m n, P m -> P n -> P (msub m n)}
+    `{p_mact: forall r m, P m -> P (mact r m)}: submodule M P -> M.
+  intros [x H].
+  exact x.
+Defined.
+
+Proposition isHom_canonical_inclusion
+  {R one sub mul} `{isring: isRing R one sub mul} {M mzero msub mact}
+  `{ismod_m: isModule (R := R) (one := one) (sub := sub) (mul := mul) M mzero msub mact}
+  `(P: M -> hProp) `{p_mzero: P mzero}
+    `(p_msub: forall m n, P m -> P n -> P (msub m n))
+    `(p_mact: forall r m, P m -> P (mact r m))
+  : isHom (ismod_m := isModule_submodule _ _ _ _ _ mzero msub mact P p_mzero p_msub p_mact)
+    (canonical_inclusion P (p_mzero := p_mzero) (p_msub := p_msub) (p_mact := p_mact)).
+  split.
+Admitted.
+
