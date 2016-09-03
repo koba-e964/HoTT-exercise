@@ -1,6 +1,6 @@
 Require Import HoTT.
 
-Goal forall A B, ~(A * B) -> IsHProp A -> IsHProp B -> IsHProp (A + B).
+Lemma lem_prop: forall A B, ~(A * B) -> IsHProp A -> IsHProp B -> IsHProp (A + B).
 intros A B H H0 H1.
 apply ishprop_sum; auto.
 Qed.
@@ -43,4 +43,21 @@ Section ex_7_1.
     exact tt.
   Qed.
 End ex_7_1.
+
+Section ex_7_7.
+  Definition GLEM m n := forall (A: TruncType n),
+    Trunc m (A + ~A).
+  Definition LEM := forall (A: hProp), A + ~A.
+  Goal forall m, GLEM (-1) m.+1 <-> LEM.
+    induction m.
+    split.
+    intros H A.
+    generalize (H A).
+    intro H0.
+    assert (IsHProp (A + ~A)).
+    apply lem_prop.
+    intro H1; destruct H1; auto.
+  Admitted.
+End ex_7_7.
+
 
